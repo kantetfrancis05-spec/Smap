@@ -183,13 +183,13 @@ export const InstallApkModal: React.FC<InstallApkModalProps> = ({ isOpen, onClos
                 <span className="font-bold text-xs text-slate-800 block">Package Contents:</span>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-mono text-slate-600">
                   <li>✓ <code>pubspec.yaml</code> (BLE, Camera, ML Kit)</li>
-                  <li>✓ <code>AndroidManifest.xml</code> (BLE permissions)</li>
+                  <li>✓ <code>android/</code> (Flutter v2 Embedding & Gradle)</li>
+                  <li>✓ <code>AndroidManifest.xml</code> (BLE & Camera permissions)</li>
+                  <li>✓ <code>MainActivity.kt</code> (FlutterActivity v2)</li>
                   <li>✓ <code>lib/main.dart</code></li>
                   <li>✓ <code>lib/modules/ble/ble_beacon_service.dart</code></li>
                   <li>✓ <code>lib/modules/face/face_verification_service.dart</code></li>
-                  <li>✓ <code>lib/modules/engine/decision_engine.dart</code></li>
-                  <li>✓ <code>lib/modules/anomaly/anomaly_detector.dart</code></li>
-                  <li>✓ <code>.github/workflows/build_apk.yml</code> (Cloud builder)</li>
+                  <li>✓ <code>.github/workflows/build_apk.yml</code> (CI Builder)</li>
                 </ul>
               </div>
 
