@@ -1,0 +1,6 @@
+{
+  "name": "SMAP - Smart Attendance App",
+  "description": "Smart Attendance Management platform with student attendance tracking, lecturer session controls, dynamic QR code verification, and Flutter code analysis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

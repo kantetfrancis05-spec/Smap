@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="smapGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4338ca"/>
+      <stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#smapGrad)"/>
+  <!-- Graduation Cap -->
+  <path d="M256 128 L80 208 L256 288 L432 208 Z" fill="#ffffff" opacity="0.95"/>
+  <path d="M144 245 L144 336 C144 380 256 400 256 400 C256 400 368 380 368 336 L368 245 L256 296 Z" fill="#e0e7ff" opacity="0.9"/>
+  <!-- Tassel -->
+  <path d="M396 226 L396 330" stroke="#fbbf24" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="396" cy="336" r="14" fill="#fbbf24"/>
+  <!-- BLE Waves -->
+  <circle cx="256" cy="320" r="28" fill="#4ade80" opacity="0.9"/>
+  <path d="M230 320 L282 320 M256 294 L256 346" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+</svg>
