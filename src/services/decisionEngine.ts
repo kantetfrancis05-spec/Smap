@@ -1,8 +1,9 @@
 import { BleEvidence, FaceEvidence, DecisionResult, LectureSession } from '../types/attendance';
+import { calculateSessionAttendancePercentage } from './attendanceCalculator';
 
 /**
  * SMAP Rule-Based Attendance Decision Engine
- * Evaluates independent evidence streams (BLE Presence + Facial Liveness)
+ * Evaluates independent evidence streams (BLE Presence + BLE Connected Lesson Time + Real Face Detection)
  * to output deterministic, explainable attendance decisions.
  */
 export function evaluateAttendanceDecision(
@@ -11,6 +12,7 @@ export function evaluateAttendanceDecision(
   session: LectureSession | null
 ): DecisionResult {
   const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const breakdown = calculateSessionAttendancePercentage(ble, face, session?.lessonDurationMinutes ?? 60);
 
   // Baseline validation
   if (!session || !session.isActive) {
@@ -23,13 +25,35 @@ export function evaluateAttendanceDecision(
     };
   }
 
+  // 0.5. Real Face Presence Check
+  if (!face.faceDetected) {
+    return {
+      status: 'REJECTED_ABSENT',
+      ruleMatched: 'R_NO_REAL_FACE_DETECTED',
+      compositeConfidence: Math.min(25, face.matchScore),
+      reason: 'No real human face was detected in front of the camera. Attendance scored 0%.',
+      timestamp,
+    };
+  }
+
   // 1. Check Liveness first: Anti-Spoof Gate
   if (!face.livenessPassed) {
     return {
       status: 'REJECTED_ABSENT',
       ruleMatched: 'R_FACE_LIVENESS_FAILED',
       compositeConfidence: 20,
-      reason: 'Facial liveness test failed. Replay or printed photo attack rejected.',
+      reason: 'Facial liveness test failed. Replay or printed photo attack rejected (0%).',
+      timestamp,
+    };
+  }
+
+  // 1.5. Student Profile Passport vs Live Scanned Face Verification Gate
+  if (face.passportMatched === false) {
+    return {
+      status: 'REJECTED_ABSENT',
+      ruleMatched: 'R_PASSPORT_FACE_MISMATCH',
+      compositeConfidence: 0,
+      reason: `Scanned live face (${face.passportMatchScore ?? face.matchScore}%) does not match the student's profile passport photo. Attendance scored 0%.`,
       timestamp,
     };
   }
@@ -40,19 +64,39 @@ export function evaluateAttendanceDecision(
       status: 'REJECTED_ABSENT',
       ruleMatched: 'R_BLE_OUT_OF_BOUNDS',
       compositeConfidence: Math.round(face.matchScore * 0.3),
-      reason: `BLE classroom beacon out of range (RSSI: ${ble.rssi} dBm, required: >= ${session.rssiThreshold} dBm). Physical room presence unconfirmed.`,
+      reason: `BLE classroom beacon out of range (RSSI: ${ble.rssi} dBm, required: >= ${session.rssiThreshold} dBm). 0 min connected in classroom.`,
       timestamp,
     };
   }
 
-  // 3. Golden Rule: BLE Verified + High Face Match (>= 85%) + Liveness Passed
+  // 2.5. Check BLE Connected Duration throughout the lesson
+  if (breakdown.bleTimePercentage < 50) {
+    return {
+      status: 'REJECTED_ABSENT',
+      ruleMatched: 'R_BLE_DURATION_INSUFFICIENT',
+      compositeConfidence: breakdown.attendancePercentage,
+      reason: `BLE connected time too short (${breakdown.bleConnectedMinutes}/${breakdown.lessonDurationMinutes} min = ${breakdown.bleTimePercentage}%). Attendance scored ${breakdown.attendancePercentage}%.`,
+      timestamp,
+    };
+  }
+
+  if (breakdown.bleTimePercentage < 75) {
+    return {
+      status: 'FLAGGED_REVIEW',
+      ruleMatched: 'R2_PARTIAL_BLE_LESSON_DURATION',
+      compositeConfidence: breakdown.attendancePercentage,
+      reason: `Partial BLE connection during lesson (${breakdown.bleConnectedMinutes}/${breakdown.lessonDurationMinutes} min = ${breakdown.bleTimePercentage}%). Attendance ${breakdown.attendancePercentage}% flagged for review.`,
+      timestamp,
+    };
+  }
+
+  // 3. Golden Rule: BLE Connected >= 75% of lesson + High Face Match (>= 85%) + Liveness Passed
   if (ble.isWithinClassroomRange && face.matchScore >= 85 && face.livenessPassed) {
-    const composite = Math.min(99, Math.round((face.matchScore * 0.6) + (Math.abs(ble.rssi) < 70 ? 38 : 32)));
     return {
       status: 'VERIFIED_PRESENT',
       ruleMatched: 'R1_MULTIMODAL_VERIFIED_OPTIMAL',
-      compositeConfidence: composite,
-      reason: `Verified in-room presence (BLE: ${ble.rssi} dBm, ~${ble.estimatedDistanceMeters}m) and biometric match (${face.matchScore}%).`,
+      compositeConfidence: breakdown.attendancePercentage,
+      reason: `Verified ${breakdown.attendancePercentage}% attendance — BLE connected ${breakdown.bleConnectedMinutes}/${breakdown.lessonDurationMinutes} min (${breakdown.bleTimePercentage}%) & real face match (${face.matchScore}%).`,
       timestamp,
     };
   }
@@ -62,18 +106,18 @@ export function evaluateAttendanceDecision(
     return {
       status: 'FLAGGED_REVIEW',
       ruleMatched: 'R2_BIOMETRIC_BORDERLINE_REVIEW',
-      compositeConfidence: 74,
-      reason: `Classroom BLE confirmed, but facial match is borderline (${face.matchScore}%). Sent to lecturer review queue.`,
+      compositeConfidence: breakdown.attendancePercentage,
+      reason: `BLE connected ${breakdown.bleConnectedMinutes}/${breakdown.lessonDurationMinutes} min, but facial match is borderline (${face.matchScore}%). Attendance ${breakdown.attendancePercentage}% sent for review.`,
       timestamp,
     };
   }
 
-  // 5. Face match failed (< 70%)
+  // 5. Face verification below 70%: record face percentage and combine with other verification steps (do not mark absent)
   return {
-    status: 'REJECTED_ABSENT',
-    ruleMatched: 'R3_IDENTITY_MISMATCH',
-    compositeConfidence: 15,
-    reason: `Facial verification failed (${face.matchScore}% match). Face does not match registered student template.`,
+    status: 'FLAGGED_REVIEW',
+    ruleMatched: 'R2_LOW_FACE_COMBINED_STEPS',
+    compositeConfidence: breakdown.attendancePercentage,
+    reason: `Face verification (${face.matchScore}%) is below 70% threshold — recorded ${face.matchScore}% (×0.3) and added to BLE lesson presence (${breakdown.bleTimePercentage}% ×0.7) for ${breakdown.attendancePercentage}% combined attendance (not marked absent).`,
     timestamp,
   };
 }

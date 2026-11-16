@@ -20,7 +20,26 @@ export interface Student {
   registeredDeviceId: string;
   biometricEnrolled: boolean;
   avatarSeed: string;
+  passportPhotoUrl?: string;
+  email?: string;
+  phone?: string;
+  bio?: string;
 }
+
+export interface LecturerAccount {
+  id: string;
+  staffId: string;
+  username: string;
+  password: string;
+  name: string;
+  title: string;
+  department: string;
+  phoneName: string;
+  bluetoothId: string;
+  courseCodes?: string[];
+}
+
+export type BeaconSource = 'lecturer_phone' | 'room_hardware';
 
 export interface BleEvidence {
   beaconUuid: string;
@@ -30,6 +49,13 @@ export interface BleEvidence {
   estimatedDistanceMeters: number;
   isWithinClassroomRange: boolean; // RSSI >= -78 dBm & distance <= 12m
   timestamp: string;
+  beaconSource?: BeaconSource;
+  lecturerPhoneName?: string;
+  lecturerBluetoothId?: string;
+  scanMethod?: 'web_bluetooth' | 'simulated_rf';
+  bleConnectedMinutes?: number;
+  lessonDurationMinutes?: number;
+  bleConnectionPercentage?: number;
 }
 
 export interface FaceEvidence {
@@ -39,6 +65,10 @@ export interface FaceEvidence {
   livenessChallenge: 'blink' | 'nod' | 'smile' | 'tilt';
   lightingQuality: 'good' | 'poor' | 'fair';
   timestamp: string;
+  passportMatched?: boolean;
+  passportMatchScore?: number;
+  passportPhotoUrl?: string;
+  scannedFacePhotoUrl?: string;
 }
 
 export type DecisionStatus = 'VERIFIED_PRESENT' | 'FLAGGED_REVIEW' | 'LATE' | 'REJECTED_ABSENT';
@@ -77,6 +107,7 @@ export interface AttendanceRecord {
   decision: DecisionResult;
   anomaly: AnomalyAssessment;
   verificationToken: string;
+  attendancePercentage?: number;
 }
 
 export interface LectureSession {
@@ -87,6 +118,7 @@ export interface LectureSession {
   room: string;
   startTime: string;
   expiresAt: string;
+  lessonDurationMinutes?: number;
   isActive: boolean;
   otpCode: string;
   qrPayload: string;
@@ -95,6 +127,11 @@ export interface LectureSession {
   beaconMinor: number;
   txPower: number;
   rssiThreshold: number; // Minimum dBm to count as in-room (e.g. -78 dBm)
+  beaconSource: BeaconSource;
+  lecturerPhoneName: string;
+  lecturerBluetoothId: string;
+  advertisingLocalName: string;
+  advertisingIntervalMs: number;
 }
 
 export interface FraudScenarioPreset {
@@ -109,4 +146,18 @@ export interface FraudScenarioPreset {
   deviceId: string;
   expectedDecision: DecisionStatus;
   expectedRiskLevel: RiskLevel;
+}
+
+export interface UploadedStudentList {
+  id: string;
+  courseCode: string;
+  uploadedBy: string;
+  uploadedAt: string;
+  fileName: string;
+  fileKind: 'photo' | 'document';
+  mimeType: string;
+  fileSizeBytes: number;
+  dataUrl: string;
+  importedStudentsCount: number;
+  notes?: string;
 }

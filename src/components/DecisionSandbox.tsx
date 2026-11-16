@@ -11,24 +11,32 @@ import {
   XCircle,
   HelpCircle,
   Zap,
-  RotateCcw
+  RotateCcw,
+  Clock
 } from 'lucide-react';
 import { BleEvidence, FaceEvidence, DecisionResult, AnomalyAssessment, FraudScenarioPreset, LectureSession, Student } from '../types/attendance';
 import { evaluateAttendanceDecision } from '../services/decisionEngine';
 import { evaluateAnomalyRisk } from '../services/anomalyEngine';
+import { calculateSessionAttendancePercentage } from '../services/attendanceCalculator';
 import { FRAUD_SCENARIOS } from '../data/mockData';
 
 export const DecisionSandbox: React.FC = () => {
   // Interactive Simulation Controls
   const [rssi, setRssi] = useState<number>(-64);
+  const [bleConnectedMinutes, setBleConnectedMinutes] = useState<number>(56);
+  const [faceDetected, setFaceDetected] = useState<boolean>(true);
+  const [passportMatched, setPassportMatched] = useState<boolean>(true);
   const [faceScore, setFaceScore] = useState<number>(96);
   const [livenessPassed, setLivenessPassed] = useState<boolean>(true);
-  const [classroomGate, setClassroomGate] = useState<number>(-78);
+  const [classroomGate] = useState<number>(-78);
   const [isClashScenario, setIsClashScenario] = useState<boolean>(false);
 
   // Calculate distance from RSSI
   const estimatedDistance = parseFloat(Math.pow(10, (-59 - rssi) / (10 * 2.2)).toFixed(1));
   const isWithinClassroom = rssi >= classroomGate;
+
+  const effectiveConnectedMinutes = isWithinClassroom ? bleConnectedMinutes : 0;
+  const lessonDuration = 60;
 
   const currentBle: BleEvidence = {
     beaconUuid: '4F7A-SMAP-BEACON-CS301',
@@ -38,15 +46,23 @@ export const DecisionSandbox: React.FC = () => {
     estimatedDistanceMeters: estimatedDistance,
     isWithinClassroomRange: isWithinClassroom,
     timestamp: new Date().toLocaleTimeString(),
+    beaconSource: 'lecturer_phone',
+    lecturerPhoneName: "Dr. Pendelton's Pixel 8 Pro",
+    lecturerBluetoothId: 'BT-LEC-A4:83:E7:2B:91:04',
+    bleConnectedMinutes: effectiveConnectedMinutes,
+    lessonDurationMinutes: lessonDuration,
+    bleConnectionPercentage: Math.round((effectiveConnectedMinutes / lessonDuration) * 100),
   };
 
   const currentFace: FaceEvidence = {
-    faceDetected: true,
-    matchScore: faceScore,
-    livenessPassed,
+    faceDetected,
+    matchScore: faceDetected ? faceScore : 0,
+    livenessPassed: faceDetected ? livenessPassed : false,
     livenessChallenge: 'blink',
     lightingQuality: 'good',
     timestamp: new Date().toLocaleTimeString(),
+    passportMatched: faceDetected ? passportMatched : false,
+    passportMatchScore: faceDetected ? (passportMatched ? faceScore : 42) : 0,
   };
 
   const mockSession: LectureSession = {
@@ -65,6 +81,12 @@ export const DecisionSandbox: React.FC = () => {
     beaconMinor: 4,
     txPower: -59,
     rssiThreshold: classroomGate,
+    beaconSource: 'lecturer_phone',
+    lecturerPhoneName: "Dr. Pendelton's Pixel 8 Pro",
+    lecturerBluetoothId: 'BT-LEC-A4:83:E7:2B:91:04',
+    advertisingLocalName: 'SMAP-CS301-8492',
+    advertisingIntervalMs: 100,
+    lessonDurationMinutes: lessonDuration,
   };
 
   const mockStudent: Student = {
@@ -82,7 +104,8 @@ export const DecisionSandbox: React.FC = () => {
     ? [{ deviceId: 'SIMULATED-DEV-TEST', studentReg: 'STU/2023/9999', timestamp: Date.now() - 30000 }]
     : [];
 
-  // Live Decision & Anomaly Evaluation
+  // Live Decision, Attendance Percentage & Anomaly Evaluation
+  const percentageBreakdown = calculateSessionAttendancePercentage(currentBle, currentFace, lessonDuration);
   const decision: DecisionResult = evaluateAttendanceDecision(currentBle, currentFace, mockSession);
   const anomaly: AnomalyAssessment = evaluateAnomalyRisk({
     student: mockStudent,
@@ -96,6 +119,9 @@ export const DecisionSandbox: React.FC = () => {
   // Apply a preset
   const handleApplyPreset = (scenario: FraudScenarioPreset) => {
     setRssi(scenario.bleRssi);
+    setBleConnectedMinutes(scenario.bleRssi >= classroomGate ? (scenario.expectedDecision === 'VERIFIED_PRESENT' ? 56 : 48) : 0);
+    setFaceDetected(scenario.faceMatchScore > 0);
+    setPassportMatched(scenario.faceMatchScore >= 70);
     setFaceScore(scenario.faceMatchScore);
     setLivenessPassed(scenario.livenessPassed);
     setIsClashScenario(scenario.category === 'device_clash');
@@ -107,19 +133,22 @@ export const DecisionSandbox: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider block">
-            Multimodal Verification & Anti-Proxy Lab
+            Multimodal Verification &amp; Anti-Proxy Lab
           </span>
           <h2 className="text-xl font-bold text-slate-900 mt-0.5">
-            Decision Engine & Anomaly Risk Sandbox
+            Decision Engine &amp; Attendance Percentage Sandbox
           </h2>
           <p className="text-xs text-slate-500 mt-1 max-w-2xl">
-            Simulate real-time interactions between physical Bluetooth Low Energy (BLE) classroom signal propagation, facial biometric confidence, and device hardware fingerprinting.
+            Simulate how real face detection, profile passport matching, BLE connected time throughout the 60-minute lesson (70% weight), and biometric confidence (30% weight) drive attendance percentage and anomaly risk.
           </p>
         </div>
 
         <button
           onClick={() => {
             setRssi(-64);
+            setBleConnectedMinutes(56);
+            setFaceDetected(true);
+            setPassportMatched(true);
             setFaceScore(96);
             setLivenessPassed(true);
             setIsClashScenario(false);
@@ -204,6 +233,32 @@ export const DecisionSandbox: React.FC = () => {
             </div>
           </div>
 
+          {/* 1.5. BLE Connected Time Throughout Lesson Slider */}
+          <div className="space-y-2 p-4 bg-indigo-50/60 rounded-xl border border-indigo-200">
+            <div className="flex justify-between items-center text-xs">
+              <span className="font-semibold text-indigo-950 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-indigo-600" />
+                BLE Connected Time Throughout Lesson (Key Driver):
+              </span>
+              <span className="font-mono font-bold text-indigo-700 text-sm">
+                {effectiveConnectedMinutes}/{lessonDuration} min ({percentageBreakdown.bleTimePercentage}%)
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max={lessonDuration}
+              value={bleConnectedMinutes}
+              onChange={(e) => setBleConnectedMinutes(Number(e.target.value))}
+              className="w-full accent-indigo-600 cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-slate-500">
+              <span>0 min (Disconnected)</span>
+              <span className="text-amber-700 font-semibold">30–44 min (Flagged Review)</span>
+              <span className="text-emerald-700 font-semibold">45–60 min (75%+ Optimal)</span>
+            </div>
+          </div>
+
           {/* 2. Biometric Match Slider */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs">
@@ -212,7 +267,7 @@ export const DecisionSandbox: React.FC = () => {
                 Facial Biometric Match Confidence:
               </span>
               <span className="font-mono font-bold text-indigo-700 text-sm">
-                {faceScore}%
+                {faceDetected ? `${faceScore}%` : '0% (No Face)'}
               </span>
             </div>
             <input
@@ -230,41 +285,73 @@ export const DecisionSandbox: React.FC = () => {
             </div>
           </div>
 
-          {/* 3. Toggles: Liveness & Device Clash */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            {/* Liveness Toggle */}
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+          {/* 3. Toggles: Real Face Detection, Passport Match, Liveness & Device Clash */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            {/* Real Face Detected Toggle */}
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
               <div>
-                <span className="font-semibold text-xs text-slate-800 block">Facial Liveness Test</span>
-                <span className="text-[11px] text-slate-500">Blink / Nod / Smile challenge</span>
+                <span className="font-semibold text-xs text-slate-800 block">Real Face</span>
+                <span className="text-[10px] text-slate-500">Camera gate</span>
+              </div>
+              <button
+                onClick={() => setFaceDetected(!faceDetected)}
+                className={`px-2.5 py-1.5 text-[11px] font-bold rounded-lg transition-colors cursor-pointer shrink-0 ${
+                  faceDetected ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                }`}
+              >
+                {faceDetected ? '✓ Real Face' : '✕ No Face'}
+              </button>
+            </div>
+
+            {/* Profile Passport Match Toggle */}
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
+              <div>
+                <span className="font-semibold text-xs text-slate-800 block">Passport Photo</span>
+                <span className="text-[10px] text-slate-500">Profile ID check</span>
+              </div>
+              <button
+                onClick={() => setPassportMatched(!passportMatched)}
+                className={`px-2.5 py-1.5 text-[11px] font-bold rounded-lg transition-colors cursor-pointer shrink-0 ${
+                  passportMatched ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                }`}
+              >
+                {passportMatched ? '✓ Matched' : '✕ Mismatch'}
+              </button>
+            </div>
+
+            {/* Liveness Toggle */}
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
+              <div>
+                <span className="font-semibold text-xs text-slate-800 block">Liveness Test</span>
+                <span className="text-[10px] text-slate-500">Anti-spoof</span>
               </div>
               <button
                 onClick={() => setLivenessPassed(!livenessPassed)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                className={`px-2.5 py-1.5 text-[11px] font-bold rounded-lg transition-colors cursor-pointer shrink-0 ${
                   livenessPassed
                     ? 'bg-emerald-600 text-white'
                     : 'bg-rose-600 text-white'
                 }`}
               >
-                {livenessPassed ? '✓ Passed' : '✕ Failed (Spoof)'}
+                {livenessPassed ? '✓ Passed' : '✕ Spoof'}
               </button>
             </div>
 
             {/* Device Hardware Clash Toggle */}
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
               <div>
-                <span className="font-semibold text-xs text-slate-800 block">Hardware Clash</span>
-                <span className="text-[11px] text-slate-500">Same device used by 2 students</span>
+                <span className="font-semibold text-xs text-slate-800 block">Device Clash</span>
+                <span className="text-[10px] text-slate-500">Multi-login</span>
               </div>
               <button
                 onClick={() => setIsClashScenario(!isClashScenario)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                className={`px-2.5 py-1.5 text-[11px] font-bold rounded-lg transition-colors cursor-pointer shrink-0 ${
                   isClashScenario
                     ? 'bg-rose-600 text-white'
                     : 'bg-slate-200 text-slate-700'
                 }`}
               >
-                {isClashScenario ? '⚠ Clash Active' : '○ Clean Device'}
+                {isClashScenario ? '⚠ Clash' : '○ Clean'}
               </button>
             </div>
           </div>
@@ -304,8 +391,66 @@ export const DecisionSandbox: React.FC = () => {
 
             <div className="pt-3 border-t border-black/10 flex justify-between text-xs font-mono">
               <span>Rule: {decision.ruleMatched}</span>
-              <span>Confidence: {decision.compositeConfidence}%</span>
+              <span>Score: {percentageBreakdown.attendancePercentage}%</span>
             </div>
+          </div>
+
+          {/* Attendance Percentage Calculation Breakdown */}
+          <div className="bg-white rounded-2xl border border-indigo-200 p-5 shadow-xs space-y-3 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-slate-900">Calculated Attendance Percentage</span>
+              <span
+                className={`text-2xl font-extrabold font-mono ${
+                  percentageBreakdown.attendancePercentage >= 75
+                    ? 'text-emerald-600'
+                    : percentageBreakdown.attendancePercentage >= 50
+                    ? 'text-amber-600'
+                    : 'text-rose-600'
+                }`}
+              >
+                {percentageBreakdown.attendancePercentage}%
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-500 block">BLE Lesson Time (70% Weight)</span>
+                <strong className="font-mono text-indigo-700">
+                  {percentageBreakdown.bleConnectedMinutes}/{percentageBreakdown.lessonDurationMinutes} min ({percentageBreakdown.bleTimePercentage}%)
+                </strong>
+                <span className="text-[10px] font-mono text-slate-500 block mt-0.5">
+                  +{(percentageBreakdown.bleTimePercentage * 0.7).toFixed(1)}% pts
+                </span>
+              </div>
+              <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-[10px] text-slate-500 block">Face Verification (30% Weight)</span>
+                <strong
+                  className={`font-mono ${
+                    !percentageBreakdown.facePassed
+                      ? 'text-rose-600'
+                      : percentageBreakdown.faceComponentPercentage < 70
+                      ? 'text-amber-600'
+                      : 'text-emerald-700'
+                  }`}
+                >
+                  {!percentageBreakdown.facePassed
+                    ? '0% Gate Failed'
+                    : percentageBreakdown.faceComponentPercentage < 70
+                    ? `${percentageBreakdown.faceComponentPercentage}% Recorded (<70%)`
+                    : `${percentageBreakdown.faceComponentPercentage}% Verified`}
+                </strong>
+                {percentageBreakdown.facePassed && (
+                  <span className="text-[10px] font-mono text-slate-500 block mt-0.5">
+                    +{(percentageBreakdown.faceComponentPercentage * 0.3).toFixed(1)}% pts
+                  </span>
+                )}
+              </div>
+            </div>
+            {percentageBreakdown.facePassed && percentageBreakdown.faceComponentPercentage < 70 && isWithinClassroom && (
+              <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 font-medium">
+                Face verification ({percentageBreakdown.faceComponentPercentage}%) is below 70% — recorded and added to the other verification steps ({percentageBreakdown.bleTimePercentage}% BLE time) instead of marking the student absent.
+              </div>
+            )}
+            <p className="text-[11px] text-slate-500">{percentageBreakdown.summary}</p>
           </div>
 
           {/* Anomaly Assessment Summary Box */}

@@ -30,53 +30,55 @@ interface SessionDataPoint {
   totalEnrolled: number;
   avgRssi: number;
   avgBiometricMatch: number;
+  avgBleConnectedMinutes: number;
+  lessonDurationMinutes: number;
 }
 
 // Historical session trend dataset generator
 const COURSE_TREND_DATA: Record<string, SessionDataPoint[]> = {
   CS301: [
-    { sessionLabel: 'Lec 1', sessionDate: 'Oct 02', attendancePercent: 96, presentCount: 48, flaggedCount: 1, absentCount: 1, totalEnrolled: 50, avgRssi: -62, avgBiometricMatch: 97.4 },
-    { sessionLabel: 'Lec 2', sessionDate: 'Oct 07', attendancePercent: 92, presentCount: 46, flaggedCount: 2, absentCount: 2, totalEnrolled: 50, avgRssi: -65, avgBiometricMatch: 96.1 },
-    { sessionLabel: 'Lec 3', sessionDate: 'Oct 14', attendancePercent: 88, presentCount: 44, flaggedCount: 3, absentCount: 3, totalEnrolled: 50, avgRssi: -67, avgBiometricMatch: 95.8 },
-    { sessionLabel: 'Lec 4', sessionDate: 'Oct 21', attendancePercent: 94, presentCount: 47, flaggedCount: 1, absentCount: 2, totalEnrolled: 50, avgRssi: -63, avgBiometricMatch: 98.0 },
-    { sessionLabel: 'Lec 5', sessionDate: 'Oct 28', attendancePercent: 86, presentCount: 43, flaggedCount: 4, absentCount: 3, totalEnrolled: 50, avgRssi: -69, avgBiometricMatch: 94.2 },
-    { sessionLabel: 'Lec 6', sessionDate: 'Nov 02', attendancePercent: 90, presentCount: 45, flaggedCount: 2, absentCount: 3, totalEnrolled: 50, avgRssi: -64, avgBiometricMatch: 96.7 },
-    { sessionLabel: 'Lec 7', sessionDate: 'Nov 06', attendancePercent: 98, presentCount: 49, flaggedCount: 0, absentCount: 1, totalEnrolled: 50, avgRssi: -61, avgBiometricMatch: 98.6 },
-    { sessionLabel: 'Lec 8', sessionDate: 'Nov 10', attendancePercent: 92, presentCount: 46, flaggedCount: 2, absentCount: 2, totalEnrolled: 50, avgRssi: -64, avgBiometricMatch: 97.1 },
+    { sessionLabel: 'Lec 1', sessionDate: 'Oct 02', attendancePercent: 96, presentCount: 48, flaggedCount: 1, absentCount: 1, totalEnrolled: 50, avgRssi: -62, avgBiometricMatch: 97.4, avgBleConnectedMinutes: 57, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 2', sessionDate: 'Oct 07', attendancePercent: 92, presentCount: 46, flaggedCount: 2, absentCount: 2, totalEnrolled: 50, avgRssi: -65, avgBiometricMatch: 96.1, avgBleConnectedMinutes: 54, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 3', sessionDate: 'Oct 14', attendancePercent: 88, presentCount: 44, flaggedCount: 3, absentCount: 3, totalEnrolled: 50, avgRssi: -67, avgBiometricMatch: 95.8, avgBleConnectedMinutes: 51, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 4', sessionDate: 'Oct 21', attendancePercent: 94, presentCount: 47, flaggedCount: 1, absentCount: 2, totalEnrolled: 50, avgRssi: -63, avgBiometricMatch: 98.0, avgBleConnectedMinutes: 55, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 5', sessionDate: 'Oct 28', attendancePercent: 86, presentCount: 43, flaggedCount: 4, absentCount: 3, totalEnrolled: 50, avgRssi: -69, avgBiometricMatch: 94.2, avgBleConnectedMinutes: 49, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 6', sessionDate: 'Nov 02', attendancePercent: 90, presentCount: 45, flaggedCount: 2, absentCount: 3, totalEnrolled: 50, avgRssi: -64, avgBiometricMatch: 96.7, avgBleConnectedMinutes: 52, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 7', sessionDate: 'Nov 06', attendancePercent: 98, presentCount: 49, flaggedCount: 0, absentCount: 1, totalEnrolled: 50, avgRssi: -61, avgBiometricMatch: 98.6, avgBleConnectedMinutes: 59, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 8', sessionDate: 'Nov 10', attendancePercent: 92, presentCount: 46, flaggedCount: 2, absentCount: 2, totalEnrolled: 50, avgRssi: -64, avgBiometricMatch: 97.1, avgBleConnectedMinutes: 54, lessonDurationMinutes: 60 },
   ],
   CS305: [
-    { sessionLabel: 'Lec 1', sessionDate: 'Oct 01', attendancePercent: 94, presentCount: 42, flaggedCount: 2, absentCount: 1, totalEnrolled: 45, avgRssi: -63, avgBiometricMatch: 96.5 },
-    { sessionLabel: 'Lec 2', sessionDate: 'Oct 08', attendancePercent: 91, presentCount: 41, flaggedCount: 2, absentCount: 2, totalEnrolled: 45, avgRssi: -66, avgBiometricMatch: 95.2 },
-    { sessionLabel: 'Lec 3', sessionDate: 'Oct 15', attendancePercent: 84, presentCount: 38, flaggedCount: 4, absentCount: 3, totalEnrolled: 45, avgRssi: -70, avgBiometricMatch: 93.9 },
-    { sessionLabel: 'Lec 4', sessionDate: 'Oct 22', attendancePercent: 89, presentCount: 40, flaggedCount: 3, absentCount: 2, totalEnrolled: 45, avgRssi: -65, avgBiometricMatch: 96.0 },
-    { sessionLabel: 'Lec 5', sessionDate: 'Oct 29', attendancePercent: 93, presentCount: 42, flaggedCount: 1, absentCount: 2, totalEnrolled: 45, avgRssi: -62, avgBiometricMatch: 97.8 },
-    { sessionLabel: 'Lec 6', sessionDate: 'Nov 05', attendancePercent: 87, presentCount: 39, flaggedCount: 3, absentCount: 3, totalEnrolled: 45, avgRssi: -68, avgBiometricMatch: 94.6 },
-    { sessionLabel: 'Lec 7', sessionDate: 'Nov 09', attendancePercent: 96, presentCount: 43, flaggedCount: 1, absentCount: 1, totalEnrolled: 45, avgRssi: -60, avgBiometricMatch: 98.2 },
+    { sessionLabel: 'Lec 1', sessionDate: 'Oct 01', attendancePercent: 94, presentCount: 42, flaggedCount: 2, absentCount: 1, totalEnrolled: 45, avgRssi: -63, avgBiometricMatch: 96.5, avgBleConnectedMinutes: 56, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 2', sessionDate: 'Oct 08', attendancePercent: 91, presentCount: 41, flaggedCount: 2, absentCount: 2, totalEnrolled: 45, avgRssi: -66, avgBiometricMatch: 95.2, avgBleConnectedMinutes: 53, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 3', sessionDate: 'Oct 15', attendancePercent: 84, presentCount: 38, flaggedCount: 4, absentCount: 3, totalEnrolled: 45, avgRssi: -70, avgBiometricMatch: 93.9, avgBleConnectedMinutes: 48, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 4', sessionDate: 'Oct 22', attendancePercent: 89, presentCount: 40, flaggedCount: 3, absentCount: 2, totalEnrolled: 45, avgRssi: -65, avgBiometricMatch: 96.0, avgBleConnectedMinutes: 52, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 5', sessionDate: 'Oct 29', attendancePercent: 93, presentCount: 42, flaggedCount: 1, absentCount: 2, totalEnrolled: 45, avgRssi: -62, avgBiometricMatch: 97.8, avgBleConnectedMinutes: 55, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 6', sessionDate: 'Nov 05', attendancePercent: 87, presentCount: 39, flaggedCount: 3, absentCount: 3, totalEnrolled: 45, avgRssi: -68, avgBiometricMatch: 94.6, avgBleConnectedMinutes: 50, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 7', sessionDate: 'Nov 09', attendancePercent: 96, presentCount: 43, flaggedCount: 1, absentCount: 1, totalEnrolled: 45, avgRssi: -60, avgBiometricMatch: 98.2, avgBleConnectedMinutes: 57, lessonDurationMinutes: 60 },
   ],
   MATH201: [
-    { sessionLabel: 'Lec 1', sessionDate: 'Oct 03', attendancePercent: 92, presentCount: 55, flaggedCount: 3, absentCount: 2, totalEnrolled: 60, avgRssi: -64, avgBiometricMatch: 96.0 },
-    { sessionLabel: 'Lec 2', sessionDate: 'Oct 10', attendancePercent: 85, presentCount: 51, flaggedCount: 5, absentCount: 4, totalEnrolled: 60, avgRssi: -68, avgBiometricMatch: 94.5 },
-    { sessionLabel: 'Lec 3', sessionDate: 'Oct 17', attendancePercent: 80, presentCount: 48, flaggedCount: 6, absentCount: 6, totalEnrolled: 60, avgRssi: -71, avgBiometricMatch: 93.1 },
-    { sessionLabel: 'Lec 4', sessionDate: 'Oct 24', attendancePercent: 88, presentCount: 53, flaggedCount: 4, absentCount: 3, totalEnrolled: 60, avgRssi: -66, avgBiometricMatch: 95.8 },
-    { sessionLabel: 'Lec 5', sessionDate: 'Oct 31', attendancePercent: 95, presentCount: 57, flaggedCount: 1, absentCount: 2, totalEnrolled: 60, avgRssi: -62, avgBiometricMatch: 97.9 },
-    { sessionLabel: 'Lec 6', sessionDate: 'Nov 07', attendancePercent: 89, presentCount: 53, flaggedCount: 3, absentCount: 4, totalEnrolled: 60, avgRssi: -65, avgBiometricMatch: 96.2 },
+    { sessionLabel: 'Lec 1', sessionDate: 'Oct 03', attendancePercent: 92, presentCount: 55, flaggedCount: 3, absentCount: 2, totalEnrolled: 60, avgRssi: -64, avgBiometricMatch: 96.0, avgBleConnectedMinutes: 54, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 2', sessionDate: 'Oct 10', attendancePercent: 85, presentCount: 51, flaggedCount: 5, absentCount: 4, totalEnrolled: 60, avgRssi: -68, avgBiometricMatch: 94.5, avgBleConnectedMinutes: 49, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 3', sessionDate: 'Oct 17', attendancePercent: 80, presentCount: 48, flaggedCount: 6, absentCount: 6, totalEnrolled: 60, avgRssi: -71, avgBiometricMatch: 93.1, avgBleConnectedMinutes: 45, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 4', sessionDate: 'Oct 24', attendancePercent: 88, presentCount: 53, flaggedCount: 4, absentCount: 3, totalEnrolled: 60, avgRssi: -66, avgBiometricMatch: 95.8, avgBleConnectedMinutes: 51, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 5', sessionDate: 'Oct 31', attendancePercent: 95, presentCount: 57, flaggedCount: 1, absentCount: 2, totalEnrolled: 60, avgRssi: -62, avgBiometricMatch: 97.9, avgBleConnectedMinutes: 56, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 6', sessionDate: 'Nov 07', attendancePercent: 89, presentCount: 53, flaggedCount: 3, absentCount: 4, totalEnrolled: 60, avgRssi: -65, avgBiometricMatch: 96.2, avgBleConnectedMinutes: 52, lessonDurationMinutes: 60 },
   ],
   CS310: [
-    { sessionLabel: 'Lec 1', sessionDate: 'Oct 04', attendancePercent: 95, presentCount: 38, flaggedCount: 1, absentCount: 1, totalEnrolled: 40, avgRssi: -61, avgBiometricMatch: 98.1 },
-    { sessionLabel: 'Lec 2', sessionDate: 'Oct 11', attendancePercent: 90, presentCount: 36, flaggedCount: 2, absentCount: 2, totalEnrolled: 40, avgRssi: -64, avgBiometricMatch: 96.4 },
-    { sessionLabel: 'Lec 3', sessionDate: 'Oct 18', attendancePercent: 92, presentCount: 37, flaggedCount: 1, absentCount: 2, totalEnrolled: 40, avgRssi: -63, avgBiometricMatch: 97.0 },
-    { sessionLabel: 'Lec 4', sessionDate: 'Oct 25', attendancePercent: 88, presentCount: 35, flaggedCount: 3, absentCount: 2, totalEnrolled: 40, avgRssi: -67, avgBiometricMatch: 95.1 },
-    { sessionLabel: 'Lec 5', sessionDate: 'Nov 01', attendancePercent: 95, presentCount: 38, flaggedCount: 1, absentCount: 1, totalEnrolled: 40, avgRssi: -62, avgBiometricMatch: 97.9 },
-    { sessionLabel: 'Lec 6', sessionDate: 'Nov 08', attendancePercent: 93, presentCount: 37, flaggedCount: 2, absentCount: 1, totalEnrolled: 40, avgRssi: -64, avgBiometricMatch: 97.3 },
+    { sessionLabel: 'Lec 1', sessionDate: 'Oct 04', attendancePercent: 95, presentCount: 38, flaggedCount: 1, absentCount: 1, totalEnrolled: 40, avgRssi: -61, avgBiometricMatch: 98.1, avgBleConnectedMinutes: 56, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 2', sessionDate: 'Oct 11', attendancePercent: 90, presentCount: 36, flaggedCount: 2, absentCount: 2, totalEnrolled: 40, avgRssi: -64, avgBiometricMatch: 96.4, avgBleConnectedMinutes: 52, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 3', sessionDate: 'Oct 18', attendancePercent: 92, presentCount: 37, flaggedCount: 1, absentCount: 2, totalEnrolled: 40, avgRssi: -63, avgBiometricMatch: 97.0, avgBleConnectedMinutes: 54, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 4', sessionDate: 'Oct 25', attendancePercent: 88, presentCount: 35, flaggedCount: 3, absentCount: 2, totalEnrolled: 40, avgRssi: -67, avgBiometricMatch: 95.1, avgBleConnectedMinutes: 51, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 5', sessionDate: 'Nov 01', attendancePercent: 95, presentCount: 38, flaggedCount: 1, absentCount: 1, totalEnrolled: 40, avgRssi: -62, avgBiometricMatch: 97.9, avgBleConnectedMinutes: 56, lessonDurationMinutes: 60 },
+    { sessionLabel: 'Lec 6', sessionDate: 'Nov 08', attendancePercent: 93, presentCount: 37, flaggedCount: 2, absentCount: 1, totalEnrolled: 40, avgRssi: -64, avgBiometricMatch: 97.3, avgBleConnectedMinutes: 55, lessonDurationMinutes: 60 },
   ],
 };
 
 // Custom tooltip renderer for Recharts
-const CustomRechartsTooltip = ({ active, payload, label }: any) => {
+const CustomRechartsTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data: SessionDataPoint = payload[0].payload;
     return (
-      <div className="bg-slate-900 text-white p-3.5 rounded-xl border border-slate-700 shadow-xl text-xs space-y-2 min-w-[210px]">
+      <div className="bg-slate-900 text-white p-3.5 rounded-xl border border-slate-700 shadow-xl text-xs space-y-2 min-w-[230px]">
         <div className="flex items-center justify-between border-b border-slate-700 pb-1.5">
           <span className="font-bold text-indigo-300">{data.sessionLabel}</span>
           <span className="text-[11px] font-mono text-slate-400">{data.sessionDate}</span>
@@ -90,6 +92,13 @@ const CustomRechartsTooltip = ({ active, payload, label }: any) => {
         </div>
 
         <div className="space-y-1 text-[11px] pt-1 border-t border-slate-800">
+          <div className="flex justify-between text-slate-300">
+            <span>BLE Connected Avg:</span>
+            <strong className="text-indigo-300 font-mono">
+              {data.avgBleConnectedMinutes}/{data.lessonDurationMinutes} min (
+              {Math.round((data.avgBleConnectedMinutes / data.lessonDurationMinutes) * 100)}%)
+            </strong>
+          </div>
           <div className="flex justify-between text-slate-300">
             <span>Verified Present:</span>
             <strong className="text-white font-mono">{data.presentCount}/{data.totalEnrolled}</strong>
@@ -105,8 +114,8 @@ const CustomRechartsTooltip = ({ active, payload, label }: any) => {
         </div>
 
         <div className="flex justify-between text-[10px] text-slate-400 pt-1 border-t border-slate-800">
-          <span>Avg BLE Signal: {data.avgRssi} dBm</span>
-          <span>Face: {data.avgBiometricMatch}%</span>
+          <span>Avg BLE: {data.avgRssi} dBm</span>
+          <span>Real Face: {data.avgBiometricMatch}%</span>
         </div>
       </div>
     );
@@ -165,7 +174,7 @@ export const AttendanceTrendChart: React.FC<AttendanceTrendChartProps> = ({
             </h3>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Historical attendance percentage per session with BLE perimeter & biometric verification
+            Session attendance percentage driven by BLE connected time throughout the lesson &amp; real face verification
           </p>
         </div>
 

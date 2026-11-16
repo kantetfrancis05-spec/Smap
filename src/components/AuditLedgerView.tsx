@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Course, Student, AttendanceRecord, DecisionStatus, RiskLevel } from '../types/attendance';
 import { AttendanceTrendChart } from './AttendanceTrendChart';
+import { calculateSessionAttendancePercentage } from '../services/attendanceCalculator';
 
 interface AuditLedgerViewProps {
   courses: Course[];
@@ -76,9 +77,13 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
       'BLE RSSI (dBm)',
       'Estimated Distance (m)',
       'Classroom In Range',
+      'BLE Connected (min)',
+      'Lesson Duration (min)',
+      'Real Face Detected',
       'Face Match (%)',
       'Liveness Passed',
       'Liveness Challenge',
+      'Calculated Attendance (%)',
       'Decision Status',
       'Decision Reason',
       'Fraud Risk Score',
@@ -87,26 +92,34 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
       'Audit Token',
     ];
 
-    const rows = filtered.map((r) => [
-      r.id,
-      r.courseCode,
-      `"${r.courseTitle}"`,
-      r.studentReg,
-      `"${r.studentName}"`,
-      r.timestamp,
-      r.bleEvidence.rssi,
-      r.bleEvidence.estimatedDistanceMeters,
-      r.bleEvidence.isWithinClassroomRange ? 'YES' : 'NO',
-      r.faceEvidence.matchScore,
-      r.faceEvidence.livenessPassed ? 'PASS' : 'FAIL',
-      r.faceEvidence.livenessChallenge,
-      r.decision.status,
-      `"${r.decision.reason}"`,
-      r.anomaly.riskScore,
-      r.anomaly.riskLevel,
-      r.anomaly.deviceClashDetected ? 'YES' : 'NO',
-      r.verificationToken,
-    ]);
+    const rows = filtered.map((r) => {
+      const breakdown = calculateSessionAttendancePercentage(r.bleEvidence, r.faceEvidence);
+      const pct = r.attendancePercentage ?? breakdown.attendancePercentage;
+      return [
+        r.id,
+        r.courseCode,
+        `"${r.courseTitle}"`,
+        r.studentReg,
+        `"${r.studentName}"`,
+        r.timestamp,
+        r.bleEvidence.rssi,
+        r.bleEvidence.estimatedDistanceMeters,
+        r.bleEvidence.isWithinClassroomRange ? 'YES' : 'NO',
+        breakdown.bleConnectedMinutes,
+        breakdown.lessonDurationMinutes,
+        r.faceEvidence.faceDetected ? 'YES' : 'NO',
+        r.faceEvidence.matchScore,
+        r.faceEvidence.livenessPassed ? 'PASS' : 'FAIL',
+        r.faceEvidence.livenessChallenge,
+        pct,
+        r.decision.status,
+        `"${r.decision.reason}"`,
+        r.anomaly.riskScore,
+        r.anomaly.riskLevel,
+        r.anomaly.deviceClashDetected ? 'YES' : 'NO',
+        r.verificationToken,
+      ];
+    });
 
     const csvContent =
       'data:text/csv;charset=utf-8,' +
@@ -236,9 +249,9 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
               <tr>
                 <th className="px-5 py-3.5">Student Information</th>
                 <th className="px-5 py-3.5">Course</th>
-                <th className="px-5 py-3.5">Timestamp</th>
-                <th className="px-5 py-3.5">BLE Signal (RSSI)</th>
-                <th className="px-5 py-3.5">Biometric Face</th>
+                <th className="px-5 py-3.5">BLE Connected Time</th>
+                <th className="px-5 py-3.5">Real Face &amp; Liveness</th>
+                <th className="px-5 py-3.5">Attendance %</th>
                 <th className="px-5 py-3.5">Risk Score</th>
                 <th className="px-5 py-3.5">Decision Status</th>
                 <th className="px-5 py-3.5 text-right">Actions</th>
@@ -252,105 +265,129 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
                   </td>
                 </tr>
               ) : (
-                filtered.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
-                    {/* Student */}
-                    <td className="px-5 py-3.5">
-                      <div className="font-bold text-slate-900">{r.studentName}</div>
-                      <span className="font-mono text-[11px] text-slate-500">{r.studentReg}</span>
-                    </td>
+                filtered.map((r) => {
+                  const breakdown = calculateSessionAttendancePercentage(r.bleEvidence, r.faceEvidence);
+                  const pct = r.attendancePercentage ?? breakdown.attendancePercentage;
+                  return (
+                    <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                      {/* Student */}
+                      <td className="px-5 py-3.5">
+                        <div className="font-bold text-slate-900">{r.studentName}</div>
+                        <span className="font-mono text-[11px] text-slate-500">
+                          {r.studentReg} • {r.timestamp}
+                        </span>
+                      </td>
 
-                    {/* Course */}
-                    <td className="px-5 py-3.5">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 font-bold text-slate-700">
-                        {r.courseCode}
-                      </span>
-                    </td>
+                      {/* Course */}
+                      <td className="px-5 py-3.5">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 font-bold text-slate-700">
+                          {r.courseCode}
+                        </span>
+                      </td>
 
-                    {/* Timestamp */}
-                    <td className="px-5 py-3.5 font-mono text-[11px] text-slate-600">{r.timestamp}</td>
-
-                    {/* BLE Evidence */}
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-1.5">
+                      {/* BLE Connected Time */}
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`font-mono font-bold ${
+                              breakdown.bleTimePercentage >= 75
+                                ? 'text-emerald-700'
+                                : breakdown.bleTimePercentage >= 50
+                                ? 'text-amber-600'
+                                : 'text-rose-600'
+                            }`}
+                          >
+                            {breakdown.bleConnectedMinutes}/{breakdown.lessonDurationMinutes} min ({breakdown.bleTimePercentage}%)
+                          </span>
+                        </div>
                         <span
-                          className={`font-mono font-bold ${
-                            r.bleEvidence.isWithinClassroomRange ? 'text-emerald-700' : 'text-rose-600'
+                          className={`text-[10px] font-semibold ${
+                            r.bleEvidence.isWithinClassroomRange ? 'text-slate-500' : 'text-rose-600'
                           }`}
                         >
-                          {r.bleEvidence.rssi} dBm
+                          {r.bleEvidence.rssi} dBm ({r.bleEvidence.estimatedDistanceMeters}m) •{' '}
+                          {r.bleEvidence.isWithinClassroomRange ? 'In Classroom' : 'Out of Bounds'}
                         </span>
-                        <span className="text-[10px] text-slate-400">({r.bleEvidence.estimatedDistanceMeters}m)</span>
-                      </div>
-                      <span
-                        className={`text-[10px] font-semibold ${
-                          r.bleEvidence.isWithinClassroomRange ? 'text-emerald-600' : 'text-rose-600'
-                        }`}
-                      >
-                        {r.bleEvidence.isWithinClassroomRange ? '✓ In Classroom' : '✕ Out of Bounds'}
-                      </span>
-                    </td>
+                      </td>
 
-                    {/* Biometrics */}
-                    <td className="px-5 py-3.5">
-                      <span className="font-mono font-bold text-indigo-700">
-                        {r.faceEvidence.matchScore}%
-                      </span>
-                      <span
-                        className={`text-[10px] block font-semibold ${
-                          r.faceEvidence.livenessPassed ? 'text-emerald-600' : 'text-rose-600'
-                        }`}
-                      >
-                        {r.faceEvidence.livenessPassed ? '✓ Liveness Pass' : '⚠ Spoof Flagged'}
-                      </span>
-                    </td>
-
-                    {/* Risk Score */}
-                    <td className="px-5 py-3.5">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          r.anomaly.riskLevel === 'LOW'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : r.anomaly.riskLevel === 'MODERATE'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200'
-                        }`}
-                      >
-                        {r.anomaly.riskScore}/100 ({r.anomaly.riskLevel})
-                      </span>
-                      {r.anomaly.deviceClashDetected && (
-                        <span className="block text-[10px] text-rose-600 font-bold mt-0.5">
-                          ⚠ Hardware Clash
+                      {/* Biometrics */}
+                      <td className="px-5 py-3.5">
+                        <span className="font-mono font-bold text-indigo-700">
+                          {r.faceEvidence.matchScore}%
                         </span>
-                      )}
-                    </td>
+                        <span
+                          className={`text-[10px] block font-semibold ${
+                            r.faceEvidence.faceDetected && r.faceEvidence.livenessPassed
+                              ? 'text-emerald-600'
+                              : 'text-rose-600'
+                          }`}
+                        >
+                          {!r.faceEvidence.faceDetected
+                            ? '✕ No Real Face'
+                            : r.faceEvidence.livenessPassed
+                            ? '✓ Real Face & Liveness Pass'
+                            : '⚠ Spoof Flagged'}
+                        </span>
+                      </td>
 
-                    {/* Decision */}
-                    <td className="px-5 py-3.5">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                          r.decision.status === 'VERIFIED_PRESENT'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : r.decision.status === 'FLAGGED_REVIEW'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {r.decision.status}
-                      </span>
-                    </td>
+                      {/* Calculated Attendance % */}
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`font-mono font-extrabold text-sm ${
+                            pct >= 75 ? 'text-emerald-700' : pct >= 50 ? 'text-amber-600' : 'text-rose-600'
+                          }`}
+                        >
+                          {pct}%
+                        </span>
+                      </td>
 
-                    {/* Action */}
-                    <td className="px-5 py-3.5 text-right">
-                      <button
-                        onClick={() => setInspectRecord(r)}
-                        className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] rounded-lg transition-colors cursor-pointer"
-                      >
-                        Inspect Evidence
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                      {/* Risk Score */}
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            r.anomaly.riskLevel === 'LOW'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : r.anomaly.riskLevel === 'MODERATE'
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                          }`}
+                        >
+                          {r.anomaly.riskScore}/100 ({r.anomaly.riskLevel})
+                        </span>
+                        {r.anomaly.deviceClashDetected && (
+                          <span className="block text-[10px] text-rose-600 font-bold mt-0.5">
+                            ⚠ Hardware Clash
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Decision */}
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                            r.decision.status === 'VERIFIED_PRESENT'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : r.decision.status === 'FLAGGED_REVIEW'
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-rose-100 text-rose-800'
+                          }`}
+                        >
+                          {r.decision.status}
+                        </span>
+                      </td>
+
+                      {/* Action */}
+                      <td className="px-5 py-3.5 text-right">
+                        <button
+                          onClick={() => setInspectRecord(r)}
+                          className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] rounded-lg transition-colors cursor-pointer"
+                        >
+                          Inspect Evidence
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -359,7 +396,7 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
 
       {/* FORENSIC EVIDENCE MODAL */}
       {inspectRecord && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-[60] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between pb-3 border-b border-slate-200">
               <div>
@@ -403,6 +440,32 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
               </div>
             </div>
 
+            {/* Calculated Attendance Percentage Callout */}
+            {(() => {
+              const modalBreakdown = calculateSessionAttendancePercentage(
+                inspectRecord.bleEvidence,
+                inspectRecord.faceEvidence
+              );
+              const modalPct = inspectRecord.attendancePercentage ?? modalBreakdown.attendancePercentage;
+              return (
+                <div className="p-3.5 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-bold text-indigo-950 block">
+                      Calculated Session Attendance Percentage
+                    </span>
+                    <span className="text-[11px] text-indigo-800">{modalBreakdown.summary}</span>
+                  </div>
+                  <span
+                    className={`text-2xl font-extrabold font-mono ml-3 ${
+                      modalPct >= 75 ? 'text-emerald-700' : modalPct >= 50 ? 'text-amber-600' : 'text-rose-600'
+                    }`}
+                  >
+                    {modalPct}%
+                  </span>
+                </div>
+              );
+            })()}
+
             {/* Evidence 2-Column Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               {/* BLE Proximity Evidence */}
@@ -412,8 +475,34 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
                   BLE Proximity Evidence
                 </span>
                 <div className="flex justify-between py-1 border-b border-slate-200/60">
-                  <span className="text-slate-500">Beacon UUID:</span>
-                  <code className="text-[10px] font-mono">{inspectRecord.bleEvidence.beaconUuid}</code>
+                  <span className="text-slate-500">Beacon Source:</span>
+                  <span className="font-semibold text-indigo-700">
+                    {inspectRecord.bleEvidence.beaconSource === 'room_hardware'
+                      ? 'Fixed Room Beacon'
+                      : 'Lecturer Phone Bluetooth'}
+                  </span>
+                </div>
+                {inspectRecord.bleEvidence.lecturerPhoneName && (
+                  <div className="flex justify-between py-1 border-b border-slate-200/60">
+                    <span className="text-slate-500">Host Phone:</span>
+                    <span className="font-medium text-slate-800 text-right">
+                      {inspectRecord.bleEvidence.lecturerPhoneName}
+                      {inspectRecord.bleEvidence.lecturerBluetoothId && (
+                        <span className="block text-[10px] font-mono text-slate-400">
+                          {inspectRecord.bleEvidence.lecturerBluetoothId}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between py-1 border-b border-slate-200/60">
+                  <span className="text-slate-500">BLE Connected Time:</span>
+                  <span className="font-mono font-bold text-indigo-700">
+                    {(() => {
+                      const b = calculateSessionAttendancePercentage(inspectRecord.bleEvidence, inspectRecord.faceEvidence);
+                      return `${b.bleConnectedMinutes}/${b.lessonDurationMinutes} min (${b.bleTimePercentage}%)`;
+                    })()}
+                  </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-200/60">
                   <span className="text-slate-500">Signal RSSI:</span>
@@ -435,8 +524,22 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                 <span className="font-bold text-slate-800 flex items-center gap-1.5">
                   <Eye className="w-4 h-4 text-indigo-600" />
-                  Facial Biometric Evidence
+                  Facial &amp; Passport Evidence
                 </span>
+                <div className="flex justify-between py-1 border-b border-slate-200/60">
+                  <span className="text-slate-500">Real Face Detected:</span>
+                  <span className={inspectRecord.faceEvidence.faceDetected ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}>
+                    {inspectRecord.faceEvidence.faceDetected ? 'YES' : 'NO'}
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-200/60">
+                  <span className="text-slate-500">Passport Match:</span>
+                  <span className={inspectRecord.faceEvidence.passportMatched !== false ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold'}>
+                    {inspectRecord.faceEvidence.passportMatched !== false
+                      ? `MATCHED (${inspectRecord.faceEvidence.passportMatchScore ?? inspectRecord.faceEvidence.matchScore}%)`
+                      : `MISMATCH (${inspectRecord.faceEvidence.passportMatchScore ?? inspectRecord.faceEvidence.matchScore}%)`}
+                  </span>
+                </div>
                 <div className="flex justify-between py-1 border-b border-slate-200/60">
                   <span className="text-slate-500">Match Confidence:</span>
                   <span className="font-mono font-bold text-indigo-700">{inspectRecord.faceEvidence.matchScore}%</span>
@@ -455,6 +558,30 @@ export const AuditLedgerView: React.FC<AuditLedgerViewProps> = ({
                   <span className="text-slate-500">Lighting Quality:</span>
                   <span className="capitalize font-medium">{inspectRecord.faceEvidence.lightingQuality}</span>
                 </div>
+                {(inspectRecord.faceEvidence.passportPhotoUrl || inspectRecord.faceEvidence.scannedFacePhotoUrl) && (
+                  <div className="flex items-center gap-3 pt-2 border-t border-slate-200/60">
+                    {inspectRecord.faceEvidence.passportPhotoUrl && (
+                      <div className="text-center">
+                        <img
+                          src={inspectRecord.faceEvidence.passportPhotoUrl}
+                          alt="Profile Passport"
+                          className="w-11 h-13 rounded-md object-cover border border-indigo-200"
+                        />
+                        <span className="text-[9px] text-slate-500 block">Passport</span>
+                      </div>
+                    )}
+                    {inspectRecord.faceEvidence.scannedFacePhotoUrl && (
+                      <div className="text-center">
+                        <img
+                          src={inspectRecord.faceEvidence.scannedFacePhotoUrl}
+                          alt="Scanned Live Face"
+                          className="w-11 h-13 rounded-md object-cover border border-emerald-300 transform -scale-x-100"
+                        />
+                        <span className="text-[9px] text-slate-500 block">Live Scan</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

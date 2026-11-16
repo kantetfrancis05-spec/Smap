@@ -1,4 +1,43 @@
-import { Course, Student, AttendanceRecord, LectureSession, FraudScenarioPreset } from '../types/attendance';
+import { Course, Student, AttendanceRecord, LectureSession, FraudScenarioPreset, LecturerAccount } from '../types/attendance';
+
+export const INITIAL_LECTURERS: LecturerAccount[] = [
+  {
+    id: 'lec-1',
+    staffId: 'LEC/CS/101',
+    username: 'apendelton',
+    password: 'Password123!',
+    name: 'Dr. Arthur Pendelton',
+    title: 'Senior Lecturer — Systems & Networks',
+    department: 'Computer Science',
+    phoneName: "Dr. Pendelton's Pixel 8 Pro",
+    bluetoothId: 'BT-LEC-A4:83:E7:2B:91:04',
+    courseCodes: ['CS301', 'CS310'],
+  },
+  {
+    id: 'lec-2',
+    staffId: 'LEC/SE/204',
+    username: 'erostova',
+    password: 'Password123!',
+    name: 'Prof. Elena Rostova',
+    title: 'Associate Professor — Software Engineering',
+    department: 'Software Engineering',
+    phoneName: "Prof. Rostova's iPhone 15 Pro",
+    bluetoothId: 'BT-LEC-7C:D1:C3:89:11:F0',
+    courseCodes: ['CS305'],
+  },
+  {
+    id: 'lec-3',
+    staffId: 'LEC/MTH/309',
+    username: 'mvance',
+    password: 'Password123!',
+    name: 'Dr. Marcus Vance',
+    title: 'Lecturer — Discrete Mathematics',
+    department: 'Mathematics & Logic',
+    phoneName: "Dr. Vance's Galaxy S24",
+    bluetoothId: 'BT-LEC-92:4F:11:0A:E2:19',
+    courseCodes: ['MATH201'],
+  },
+];
 
 export const INITIAL_COURSES: Course[] = [
   {
@@ -61,6 +100,9 @@ export const INITIAL_STUDENTS: Student[] = [
     registeredDeviceId: 'DEV-PIXEL-7A-8821',
     biometricEnrolled: true,
     avatarSeed: 'francis',
+    email: 'francis.kantet@smap.edu',
+    phone: '+254 712 345 678',
+    bio: 'BSc Computer Science • Systems & Security Track',
   },
   {
     id: 's2',
@@ -71,6 +113,8 @@ export const INITIAL_STUDENTS: Student[] = [
     registeredDeviceId: 'DEV-IPHONE15-3312',
     biometricEnrolled: true,
     avatarSeed: 'sarah',
+    email: 'sarah.chen@smap.edu',
+    bio: 'BSc Computer Science • Distributed Computing',
   },
   {
     id: 's3',
@@ -81,6 +125,8 @@ export const INITIAL_STUDENTS: Student[] = [
     registeredDeviceId: 'DEV-SAMSUNGS23-9910',
     biometricEnrolled: true,
     avatarSeed: 'david',
+    email: 'david.ochieng@smap.edu',
+    bio: 'BEng Software Engineering • Mobile Platforms',
   },
   {
     id: 's4',
@@ -91,6 +137,8 @@ export const INITIAL_STUDENTS: Student[] = [
     registeredDeviceId: 'DEV-ONEPLUS-4112',
     biometricEnrolled: true,
     avatarSeed: 'amara',
+    email: 'amara.diallo@smap.edu',
+    bio: 'BSc Computer Science • AI & Algorithms',
   },
   {
     id: 's5',
@@ -101,6 +149,8 @@ export const INITIAL_STUDENTS: Student[] = [
     registeredDeviceId: 'DEV-XIAOMI-6701',
     biometricEnrolled: true,
     avatarSeed: 'marcus',
+    email: 'marcus.brody@smap.edu',
+    bio: 'BSc Information Technology • Networks',
   },
 ];
 
@@ -121,6 +171,12 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
       estimatedDistanceMeters: 3.4,
       isWithinClassroomRange: true,
       timestamp: '09:12:04 AM',
+      beaconSource: 'lecturer_phone',
+      lecturerPhoneName: "Dr. Pendelton's Pixel 8 Pro",
+      lecturerBluetoothId: 'BT-LEC-A4:83:E7:2B:91:04',
+      bleConnectedMinutes: 56,
+      lessonDurationMinutes: 60,
+      bleConnectionPercentage: 93,
     },
     faceEvidence: {
       faceDetected: true,
@@ -133,8 +189,8 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
     decision: {
       status: 'VERIFIED_PRESENT',
       ruleMatched: 'R1_MULTIMODAL_VERIFIED_OPTIMAL',
-      compositeConfidence: 98,
-      reason: 'Verified in-room presence (BLE: -64 dBm, ~3.4m) and biometric match (97%).',
+      compositeConfidence: 94,
+      reason: 'Verified 94% attendance — BLE connected 56/60 min (93%) and biometric match (97%).',
       timestamp: '09:12:10 AM',
     },
     anomaly: {
@@ -148,6 +204,7 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
       explanation: 'All signals nominal. No anomaly detected.',
     },
     verificationToken: 'SMAP-CS301-89F2A',
+    attendancePercentage: 94,
   },
   {
     id: 'rec-002',
@@ -165,6 +222,12 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
       estimatedDistanceMeters: 4.8,
       isWithinClassroomRange: true,
       timestamp: '02:05:11 PM',
+      beaconSource: 'lecturer_phone',
+      lecturerPhoneName: "Prof. Rostova's iPhone 15 Pro",
+      lecturerBluetoothId: 'BT-LEC-7C:D1:C3:89:11:F0',
+      bleConnectedMinutes: 51,
+      lessonDurationMinutes: 60,
+      bleConnectionPercentage: 85,
     },
     faceEvidence: {
       faceDetected: true,
@@ -177,8 +240,8 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
     decision: {
       status: 'VERIFIED_PRESENT',
       ruleMatched: 'R1_MULTIMODAL_VERIFIED_OPTIMAL',
-      compositeConfidence: 96,
-      reason: 'Verified in-room presence (BLE: -68 dBm, ~4.8m) and biometric match (94%).',
+      compositeConfidence: 88,
+      reason: 'Verified 88% attendance — BLE connected 51/60 min (85%) and biometric match (94%).',
       timestamp: '02:05:18 PM',
     },
     anomaly: {
@@ -192,6 +255,7 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
       explanation: 'All signals nominal.',
     },
     verificationToken: 'SMAP-CS305-41D9C',
+    attendancePercentage: 88,
   },
   {
     id: 'rec-003',
@@ -209,6 +273,12 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
       estimatedDistanceMeters: 2.1,
       isWithinClassroomRange: true,
       timestamp: '09:08:22 AM',
+      beaconSource: 'lecturer_phone',
+      lecturerPhoneName: "Dr. Pendelton's Pixel 8 Pro",
+      lecturerBluetoothId: 'BT-LEC-A4:83:E7:2B:91:04',
+      bleConnectedMinutes: 59,
+      lessonDurationMinutes: 60,
+      bleConnectionPercentage: 98,
     },
     faceEvidence: {
       faceDetected: true,
@@ -221,8 +291,8 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
     decision: {
       status: 'VERIFIED_PRESENT',
       ruleMatched: 'R1_MULTIMODAL_VERIFIED_OPTIMAL',
-      compositeConfidence: 99,
-      reason: 'Verified in-room presence (BLE: -58 dBm, ~2.1m) and biometric match (98%).',
+      compositeConfidence: 98,
+      reason: 'Verified 98% attendance — BLE connected 59/60 min (98%) and biometric match (98%).',
       timestamp: '09:08:29 AM',
     },
     anomaly: {
@@ -236,6 +306,7 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
       explanation: 'All signals nominal.',
     },
     verificationToken: 'SMAP-CS301-33C4E',
+    attendancePercentage: 98,
   },
   {
     id: 'rec-004',
@@ -253,6 +324,12 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
       estimatedDistanceMeters: 14.8,
       isWithinClassroomRange: false,
       timestamp: '09:16:11 AM',
+      beaconSource: 'lecturer_phone',
+      lecturerPhoneName: "Dr. Pendelton's Pixel 8 Pro",
+      lecturerBluetoothId: 'BT-LEC-A4:83:E7:2B:91:04',
+      bleConnectedMinutes: 0,
+      lessonDurationMinutes: 60,
+      bleConnectionPercentage: 0,
     },
     faceEvidence: {
       faceDetected: true,
@@ -265,8 +342,8 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
     decision: {
       status: 'FLAGGED_REVIEW',
       ruleMatched: 'R_BLE_OUT_OF_BOUNDS',
-      compositeConfidence: 58,
-      reason: 'BLE signal indicates student was standing in hallway outside door (-84 dBm). Sent to lecturer review.',
+      compositeConfidence: 0,
+      reason: 'BLE signal indicates student was standing in hallway outside door (-84 dBm, 0 min connected). Sent to lecturer review.',
       timestamp: '09:16:18 AM',
     },
     anomaly: {
@@ -280,6 +357,7 @@ export const INITIAL_RECORDS: AttendanceRecord[] = [
       explanation: '1 risk factor identified. Composite fraud risk evaluated at 55/100 (HIGH Risk).',
     },
     verificationToken: 'SMAP-CS301-FLAG-01',
+    attendancePercentage: 0,
   },
 ];
 
@@ -290,7 +368,8 @@ export const INITIAL_ACTIVE_SESSION: LectureSession = {
   lecturerName: 'Dr. Arthur Pendelton',
   room: 'Lecture Theatre 4B',
   startTime: '09:00 AM',
-  expiresAt: '09:45 AM',
+  expiresAt: '10:00 AM',
+  lessonDurationMinutes: 60,
   isActive: true,
   otpCode: '482910',
   qrPayload: 'SMAP://SESSION/CS301/TOKEN-9831',
@@ -299,6 +378,11 @@ export const INITIAL_ACTIVE_SESSION: LectureSession = {
   beaconMinor: 4,
   txPower: -59,
   rssiThreshold: -78,
+  beaconSource: 'lecturer_phone',
+  lecturerPhoneName: "Dr. Pendelton's Pixel 8 Pro",
+  lecturerBluetoothId: 'BT-LEC-A4:83:E7:2B:91:04',
+  advertisingLocalName: 'SMAP-CS301-4829',
+  advertisingIntervalMs: 100,
 };
 
 export const FRAUD_SCENARIOS: FraudScenarioPreset[] = [
